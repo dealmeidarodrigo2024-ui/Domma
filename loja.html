@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loja — Domma</title>
+<meta name="description" content="Catálogo completo Domma: vasos, iluminação, têxteis e objetos de decoração.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="logo">Domma</a>
+    <nav class="main-nav">
+      <a href="index.html">Início</a>
+      <a href="loja.html" class="active">Loja</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-link">
+        Carrinho <span class="cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="wrap">
+    <span class="eyebrow">Coleção completa</span>
+    <h1 class="display" style="font-size:clamp(30px,4vw,48px); margin-top:10px;">Todos os produtos</h1>
+  </div>
+</div>
+
+<section class="section" style="padding-top:40px;">
+  <div class="wrap">
+    <div class="filters-bar" id="filters-bar">
+      <button class="filter-chip active" data-filter="todos">Todos</button>
+    </div>
+    <div class="product-grid" id="products-grid"></div>
+    <div class="empty-state" id="empty-state" style="display:none;">
+      <p>Nenhum produto encontrado para esse filtro.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 Domma. Todos os direitos reservados.</span>
+      <a href="https://wa.me/5567993430933" target="_blank" rel="noopener">Fale no WhatsApp</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  let ALL_PRODUCTS = [];
+  const params = new URLSearchParams(window.location.search);
+  let activeFilter = params.get("material") || "todos";
+
+  fetch("js/products.json")
+    .then(r => r.json())
+    .then(products => {
+      ALL_PRODUCTS = products;
+      renderFilters(products);
+      renderGrid();
+    });
+
+  function renderFilters(products) {
+    const materials = [...new Set(products.map(p => p.material))];
+    const bar = document.getElementById("filters-bar");
+    bar.innerHTML = `<button class="filter-chip ${activeFilter==='todos'?'active':''}" data-filter="todos">Todos</button>` +
+      materials.map(m => `<button class="filter-chip ${activeFilter===m?'active':''}" data-filter="${m}">${m}</button>`).join("");
+
+    bar.querySelectorAll(".filter-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter;
+        bar.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderGrid();
+      });
+    });
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById("products-grid");
+    const empty = document.getElementById("empty-state");
+    const filtered = activeFilter === "todos" ? ALL_PRODUCTS : ALL_PRODUCTS.filter(p => p.material === activeFilter);
+
+    if (filtered.length === 0) {
+      grid.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+    grid.innerHTML = filtered.map(productCardHTML).join("");
+  }
+
+  function productCardHTML(p) {
+    const hasPromo = p.precoPromo && p.precoPromo < p.preco;
+    return `
+      <article class="product-card">
+        <a href="produto.html?id=${p.id}" class="thumb">
+          ${hasPromo ? '<span class="tag">Promoção</span>' : ''}
+          <img src="${p.imagem}" alt="${p.nome}" loading="lazy">
+        </a>
+        <span class="material-label">${p.material}</span>
+        <h3><a href="produto.html?id=${p.id}">${p.nome}</a></h3>
+        <div class="price-row">
+          ${hasPromo ? `<span class="price-old">${formatMoney(p.preco)}</span>` : ''}
+          <span class="price">${formatMoney(hasPromo ? p.precoPromo : p.preco)}</span>
+        </div>
+        <a href="produto.html?id=${p.id}" class="add-btn">Ver produto</a>
+      </article>
+    `;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Produto — Domma</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="logo">Domma</a>
+    <nav class="main-nav">
+      <a href="index.html">Início</a>
+      <a href="loja.html">Loja</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-link">
+        Carrinho <span class="cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="breadcrumb" style="padding-top:24px;">
+    <a href="index.html">Início</a> / <a href="loja.html">Loja</a> / <span id="breadcrumb-name"></span>
+  </div>
+
+  <div id="product-container"></div>
+</div>
+
+<section class="section" id="related-section" style="display:none;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Combina com</span>
+        <h2>Você também pode gostar</h2>
+      </div>
+    </div>
+    <div class="product-grid" id="related-grid"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 Domma. Todos os direitos reservados.</span>
+      <a href="https://wa.me/5567993430933" target="_blank" rel="noopener">Fale no WhatsApp</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  const productId = new URLSearchParams(window.location.search).get("id");
+  let currentProduct = null;
+  let qty = 1;
+
+  fetch("js/products.json")
+    .then(r => r.json())
+    .then(products => {
+      currentProduct = products.find(p => p.id === productId);
+      if (!currentProduct) {
+        document.getElementById("product-container").innerHTML =
+          `<div class="empty-state"><p>Produto não encontrado. <a href="loja.html" style="color:var(--brass)">Voltar para a loja</a></p></div>`;
+        return;
+      }
+      renderProduct(currentProduct);
+      renderRelated(products, currentProduct);
+    });
+
+  function renderProduct(p) {
+    document.title = p.nome + " — Domma";
+    document.getElementById("page-title").textContent = p.nome + " — Domma";
+    document.getElementById("breadcrumb-name").textContent = p.nome;
+
+    const hasPromo = p.precoPromo && p.precoPromo < p.preco;
+
+    document.getElementById("product-container").innerHTML = `
+      <div class="product-detail">
+        <div class="thumb">
+          <img src="${p.imagem}" alt="${p.nome}">
+        </div>
+        <div class="product-info">
+          <span class="material-label">${p.material}</span>
+          <h1>${p.nome}</h1>
+          <div class="price-row">
+            ${hasPromo ? `<span class="price-old">${formatMoney(p.preco)}</span>` : ''}
+            <span class="price">${formatMoney(hasPromo ? p.precoPromo : p.preco)}</span>
+          </div>
+          <p class="desc">${p.descricao}</p>
+
+          <div class="qty-row">
+            <div class="qty-stepper">
+              <button id="qty-minus" aria-label="Diminuir quantidade">−</button>
+              <span id="qty-display">1</span>
+              <button id="qty-plus" aria-label="Aumentar quantidade">+</button>
+            </div>
+            <span class="stock-note">${p.estoque > 0 ? p.estoque + ' em estoque' : 'Sob encomenda'}</span>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="add-to-cart-btn">Adicionar ao carrinho</button>
+
+          <ul class="info-list">
+            <li><span>Material</span><span>${p.material}</span></li>
+            <li><span>Categoria</span><span>${p.categoria}</span></li>
+            <li><span>Envio</span><span>Todo o Brasil</span></li>
+          </ul>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("qty-minus").addEventListener("click", () => {
+      qty = Math.max(1, qty - 1);
+      document.getElementById("qty-display").textContent = qty;
+    });
+    document.getElementById("qty-plus").addEventListener("click", () => {
+      qty = qty + 1;
+      document.getElementById("qty-display").textContent = qty;
+    });
+    document.getElementById("add-to-cart-btn").addEventListener("click", () => {
+      addToCart(p, qty);
+      showToast(qty + "x " + p.nome + " adicionado ao carrinho");
+    });
+  }
+
+  function renderRelated(products, current) {
+    const related = products.filter(p => p.categoria === current.categoria && p.id !== current.id).slice(0, 4);
+    if (related.length === 0) return;
+    document.getElementById("related-section").style.display = "block";
+    document.getElementById("related-grid").innerHTML = related.map(p => {
+      const hasPromo = p.precoPromo && p.precoPromo < p.preco;
+      return `
+        <article class="product-card">
+          <a href="produto.html?id=${p.id}" class="thumb">
+            ${hasPromo ? '<span class="tag">Promoção</span>' : ''}
+            <img src="${p.imagem}" alt="${p.nome}" loading="lazy">
+          </a>
+          <span class="material-label">${p.material}</span>
+          <h3><a href="produto.html?id=${p.id}">${p.nome}</a></h3>
+          <div class="price-row">
+            ${hasPromo ? `<span class="price-old">${formatMoney(p.preco)}</span>` : ''}
+            <span class="price">${formatMoney(hasPromo ? p.precoPromo : p.preco)}</span>
+          </div>
+          <a href="produto.html?id=${p.id}" class="add-btn">Ver produto</a>
+        </article>
+      `;
+    }).join("");
+  }
+</script>
+</body>
+</html>

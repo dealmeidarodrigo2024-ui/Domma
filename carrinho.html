@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrinho — Domma</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="logo">Domma</a>
+    <nav class="main-nav">
+      <a href="index.html">Início</a>
+      <a href="loja.html">Loja</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-link">
+        Carrinho <span class="cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="wrap">
+    <span class="eyebrow">Seu pedido</span>
+    <h1 class="display" style="font-size:clamp(30px,4vw,48px); margin-top:10px;">Carrinho</h1>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cart-layout" id="cart-layout">
+    <div id="cart-items"></div>
+    <div class="summary-box">
+      <h3>Resumo do pedido</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="summary-subtotal"></span>
+      </div>
+      <div class="summary-row">
+        <span>Frete</span>
+        <span id="summary-shipping"></span>
+      </div>
+      <div class="summary-row total">
+        <span>Total</span>
+        <span class="price" id="summary-total"></span>
+      </div>
+      <a href="checkout.html" class="btn btn-primary btn-block" id="checkout-btn" style="margin-top:20px;">Finalizar pedido</a>
+      <a href="loja.html" class="btn btn-outline btn-block" style="margin-top:12px;">Continuar comprando</a>
+    </div>
+  </div>
+
+  <div class="empty-state" id="empty-cart" style="display:none;">
+    <p>Seu carrinho está vazio.</p>
+    <a href="loja.html" class="btn btn-primary" style="margin-top:20px;">Ver produtos</a>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 Domma. Todos os direitos reservados.</span>
+      <a href="https://wa.me/5567993430933" target="_blank" rel="noopener">Fale no WhatsApp</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  function render() {
+    const cart = getCart();
+    const layout = document.getElementById("cart-layout");
+    const emptyState = document.getElementById("empty-cart");
+
+    if (cart.length === 0) {
+      layout.style.display = "none";
+      emptyState.style.display = "block";
+      return;
+    }
+    layout.style.display = "grid";
+    emptyState.style.display = "none";
+
+    document.getElementById("cart-items").innerHTML = cart.map(item => `
+      <div class="cart-item" data-id="${item.id}">
+        <div class="thumb"><img src="${item.imagem}" alt="${item.nome}"></div>
+        <div>
+          <span class="material-label">${item.material}</span>
+          <h4>${item.nome}</h4>
+          <div class="qty-stepper" style="margin-top:8px;">
+            <button class="qty-dec" aria-label="Diminuir">−</button>
+            <span>${item.qty}</span>
+            <button class="qty-inc" aria-label="Aumentar">+</button>
+          </div>
+        </div>
+        <div class="cart-item-actions">
+          <span class="price">${formatMoney(item.preco * item.qty)}</span>
+          <button class="remove-btn">Remover</button>
+        </div>
+      </div>
+    `).join("");
+
+    document.getElementById("summary-subtotal").textContent = formatMoney(cartSubtotal());
+    const shipping = cartShipping();
+    document.getElementById("summary-shipping").textContent = shipping === 0 ? "Grátis" : formatMoney(shipping);
+    document.getElementById("summary-total").textContent = formatMoney(cartTotal());
+
+    document.querySelectorAll(".cart-item").forEach(el => {
+      const id = el.dataset.id;
+      const item = cart.find(i => i.id === id);
+      el.querySelector(".qty-inc").addEventListener("click", () => { updateQty(id, item.qty + 1); render(); });
+      el.querySelector(".qty-dec").addEventListener("click", () => { updateQty(id, item.qty - 1); render(); });
+      el.querySelector(".remove-btn").addEventListener("click", () => { removeFromCart(id); render(); });
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finalizar pedido — Domma</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="logo">Domma</a>
+    <nav class="main-nav">
+      <a href="index.html">Início</a>
+      <a href="loja.html">Loja</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-link">
+        Carrinho <span class="cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="wrap">
+    <span class="eyebrow">Última etapa</span>
+    <h1 class="display" style="font-size:clamp(30px,4vw,48px); margin-top:10px;">Finalizar pedido</h1>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="checkout-layout" id="checkout-layout">
+    <form id="checkout-form">
+      <div class="form-group">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telefone">Telefone / WhatsApp</label>
+          <input type="tel" id="telefone" placeholder="(11) 91234-5678" required>
+        </div>
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="endereco">Endereço (rua, número, complemento)</label>
+        <input type="text" id="endereco" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bairro">Bairro</label>
+          <input type="text" id="bairro" required>
+        </div>
+        <div class="form-group">
+          <label for="cidade">Cidade / UF</label>
+          <input type="text" id="cidade" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="cep">CEP</label>
+        <input type="text" id="cep" required>
+      </div>
+      <div class="form-group">
+        <label for="obs">Observações (opcional)</label>
+        <textarea id="obs" rows="3"></textarea>
+      </div>
+
+      <div class="payment-note">
+        <span>💬</span>
+        <span>O pagamento é combinado direto no WhatsApp após a confirmação do pedido — PIX, cartão ou o que for mais fácil pra você.</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:24px;">Enviar pedido pelo WhatsApp</button>
+    </form>
+
+    <div class="summary-box">
+      <h3>Seu pedido</h3>
+      <div id="checkout-items"></div>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="summary-subtotal"></span>
+      </div>
+      <div class="summary-row">
+        <span>Frete</span>
+        <span id="summary-shipping"></span>
+      </div>
+      <div class="summary-row total">
+        <span>Total</span>
+        <span class="price" id="summary-total"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" id="empty-cart" style="display:none;">
+    <p>Seu carrinho está vazio.</p>
+    <a href="loja.html" class="btn btn-primary" style="margin-top:20px;">Ver produtos</a>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 Domma. Todos os direitos reservados.</span>
+      <a href="https://wa.me/5567993430933" target="_blank" rel="noopener">Fale no WhatsApp</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  const cart = getCart();
+
+  if (cart.length === 0) {
+    document.getElementById("checkout-layout").style.display = "none";
+    document.getElementById("empty-cart").style.display = "block";
+  } else {
+    document.getElementById("checkout-items").innerHTML = cart.map(item => `
+      <div class="summary-row"><span>${item.qty}x ${item.nome}</span><span>${formatMoney(item.preco * item.qty)}</span></div>
+    `).join("");
+    document.getElementById("summary-subtotal").textContent = formatMoney(cartSubtotal());
+    const shipping = cartShipping();
+    document.getElementById("summary-shipping").textContent = shipping === 0 ? "Grátis" : formatMoney(shipping);
+    document.getElementById("summary-total").textContent = formatMoney(cartTotal());
+  }
+
+  document.getElementById("checkout-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const nome = document.getElementById("nome").value.trim();
+    const telefone = document.getElementById("telefone").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const endereco = document.getElementById("endereco").value.trim();
+    const bairro = document.getElementById("bairro").value.trim();
+    const cidade = document.getElementById("cidade").value.trim();
+    const cep = document.getElementById("cep").value.trim();
+    const obs = document.getElementById("obs").value.trim();
+
+    let msg = `*Novo pedido — ${STORE_CONFIG.nome}*\n\n`;
+    msg += `*Cliente:* ${nome}\n`;
+    msg += `*Telefone:* ${telefone}\n`;
+    if (email) msg += `*E-mail:* ${email}\n`;
+    msg += `\n*Endereço de entrega:*\n${endereco} — ${bairro}\n${cidade} — CEP ${cep}\n`;
+    if (obs) msg += `\n*Observações:* ${obs}\n`;
+
+    msg += `\n*Itens do pedido:*\n`;
+    cart.forEach(item => {
+      msg += `• ${item.qty}x ${item.nome} — ${formatMoney(item.preco * item.qty)}\n`;
+    });
+
+    msg += `\n*Subtotal:* ${formatMoney(cartSubtotal())}\n`;
+    msg += `*Frete:* ${cartShipping() === 0 ? "Grátis" : formatMoney(cartShipping())}\n`;
+    msg += `*Total:* ${formatMoney(cartTotal())}\n`;
+
+    const url = `https://wa.me/${STORE_CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  });
+</script>
+</body>
+</html>

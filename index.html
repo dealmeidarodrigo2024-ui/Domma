@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domma — Objetos para o seu lar</title>
+<meta name="description" content="Peças de decoração selecionadas para transformar sua casa: cerâmica, madeira, linho e latão em curadoria autoral.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="logo">Domma</a>
+    <nav class="main-nav">
+      <a href="index.html" class="active">Início</a>
+      <a href="loja.html">Loja</a>
+      <a href="loja.html#destaques">Destaques</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-link">
+        Carrinho <span class="cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <span class="eyebrow">Curadoria de casa &amp; decoração</span>
+    <h1>Objetos que dão <em>textura</em> ao dia a dia</h1>
+    <p>Peças selecionadas em cerâmica, madeira, linho e latão — para casas que preferem material honesto a decoração descartável.</p>
+    <div class="hero-actions">
+      <a href="loja.html" class="btn btn-primary">Ver coleção</a>
+      <a href="#materiais" class="btn btn-outline">Explorar por material</a>
+    </div>
+  </div>
+</section>
+
+<nav class="material-nav" id="materiais" aria-label="Navegar por material">
+  <div class="wrap" id="material-nav-list"></div>
+</nav>
+
+<section class="section" id="destaques">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Seleção da semana</span>
+        <h2>Destaques da coleção</h2>
+      </div>
+      <p>Peças com produção limitada, escolhidas pela equipe Domma por sua textura e presença.</p>
+    </div>
+    <div class="product-grid" id="featured-grid"></div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Todos os produtos</span>
+        <h2>A coleção completa</h2>
+      </div>
+      <a href="loja.html" class="btn btn-outline">Ver loja completa</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>Domma</h4>
+        <p>Objetos de decoração selecionados com foco em material, textura e permanência. Enviamos para todo o Brasil.</p>
+      </div>
+      <div>
+        <h4>Loja</h4>
+        <ul>
+          <li><a href="loja.html">Todos os produtos</a></li>
+          <li><a href="loja.html#destaques">Destaques</a></li>
+          <li><a href="carrinho.html">Carrinho</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Institucional</h4>
+        <ul>
+          <li><a href="sobre.html">Sobre a Domma</a></li>
+          <li><a href="sobre.html#trocas">Trocas e devoluções</a></li>
+          <li><a href="sobre.html#entrega">Prazos de entrega</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Fale conosco</h4>
+        <ul>
+          <li><a href="https://wa.me/5567993430933" target="_blank" rel="noopener">WhatsApp</a></li>
+          <li><a href="mailto:contato@domma.com.br">contato@domma.com.br</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Domma. Todos os direitos reservados.</span>
+      <span>Feito com cuidado para o seu lar.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  const MATERIAL_LABELS = {
+    ceramica: "Cerâmica", linho: "Linho", madeira: "Madeira", latao: "Latão",
+    algodao: "Algodão", vidro: "Vidro", "fibra natural": "Fibra", boucle: "Bouclé",
+    juta: "Juta", "cera vegetal": "Cera"
+  };
+
+  function slugMaterial(m) {
+    return m.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").toLowerCase();
+  }
+
+  fetch("js/products.json")
+    .then(r => r.json())
+    .then(products => {
+      renderMaterialNav(products);
+      renderFeatured(products);
+    });
+
+  function renderMaterialNav(products) {
+    const materials = [...new Set(products.map(p => p.material))];
+    const list = document.getElementById("material-nav-list");
+    list.innerHTML = materials.map(m => `
+      <a href="loja.html?material=${encodeURIComponent(m)}" class="material-item">
+        <span class="swatch swatch-${slugMaterial(m)}"></span>
+        <span>${m}</span>
+      </a>
+    `).join("");
+  }
+
+  function renderFeatured(products) {
+    const featured = products.filter(p => p.destaque);
+    const grid = document.getElementById("featured-grid");
+    grid.innerHTML = featured.map(productCardHTML).join("");
+  }
+
+  function productCardHTML(p) {
+    const hasPromo = p.precoPromo && p.precoPromo < p.preco;
+    return `
+      <article class="product-card">
+        <a href="produto.html?id=${p.id}" class="thumb">
+          ${hasPromo ? '<span class="tag">Promoção</span>' : ''}
+          <img src="${p.imagem}" alt="${p.nome}" loading="lazy">
+        </a>
+        <span class="material-label">${p.material}</span>
+        <h3><a href="produto.html?id=${p.id}">${p.nome}</a></h3>
+        <div class="price-row">
+          ${hasPromo ? `<span class="price-old">${formatMoney(p.preco)}</span>` : ''}
+          <span class="price">${formatMoney(hasPromo ? p.precoPromo : p.preco)}</span>
+        </div>
+        <a href="produto.html?id=${p.id}" class="add-btn">Ver produto</a>
+      </article>
+    `;
+  }
+</script>
+</body>
+</html>
